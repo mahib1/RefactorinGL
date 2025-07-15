@@ -1,0 +1,77 @@
+#!/bin/bash
+
+set -e
+
+echo "======================================="
+echo "🔍 Checking for dependencies..."
+echo "======================================="
+
+mkdir -p external
+
+# GLFW
+if [ ! -d external/glfw ]; then
+    echo "→ Cloning GLFW..."
+    git clone https://github.com/glfw/glfw.git external/glfw
+else
+    echo "✓ GLFW found"
+fi
+
+# GLM
+if [ ! -d external/glm ]; then
+    echo "→ Cloning GLM..."
+    git clone https://github.com/g-truc/glm.git external/glm
+else
+    echo "✓ GLM found"
+fi
+
+# GLAD
+if [ ! -d external/glad ]; then
+    echo "→ Cloning GLAD..."
+    git clone https://github.com/Dav1dde/glad.git external/glad
+    echo "→ Running glad generator (OpenGL C 3.3 compatibility)..."
+    cd external/glad
+    python3 -m glad --out-path ./GL --api gl:compatibility=3.3 c
+    cd ../..
+else
+    echo "✓ GLAD found"
+fi
+
+echo "======================================="
+echo "📦 Configuring build..."
+echo "======================================="
+
+mkdir -p build
+cd build
+
+CMAKE_FLAGS=""
+if [ "$1" == "-d" ]; then
+    echo "⚙️  Debug mode enabled"
+    CMAKE_FLAGS='-DCMAKE_CXX_FLAGS="-DDEBUG"'
+fi
+
+cmake .. $CMAKE_FLAGS
+
+echo "======================================="
+echo "🔨 Building project..."
+echo "======================================="
+
+make
+
+echo "======================================="
+echo "🚚 Moving binary to src/..."
+echo "======================================="
+
+# Set your actual binary name here
+BINARY_NAME="practise"
+
+if [ -f "./bin/$BINARY_NAME" ]; then
+    mv "./bin/$BINARY_NAME" ../src/
+    echo "✓ Moved $BINARY_NAME to src/"
+else
+    echo "✗ Build did not produce expected binary: $BINARY_NAME"
+    exit 1
+fi
+
+echo "======================================="
+echo "✅ Done! Run it via ./src/$BINARY_NAME"
+echo "======================================="
